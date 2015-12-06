@@ -11,6 +11,10 @@ Inspired from http://www.svds.com/jupyter-notebook-best-practices-for-data-scien
 
 e.g.: 2015-12-06-hr-data-cleaning.ipynb
 
+Note:
+- No spaces
+- all lowercase with words seperated by _
+
 ### Enable autosave of notebooks to .py
 In `~/.ipython/profile_default/ipython_notebook_config.py` replace:
     
