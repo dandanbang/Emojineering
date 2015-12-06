@@ -13,7 +13,7 @@ e.g.: 2015-12-06-hr-data-cleaning.ipynb
 
 Note:
 - No spaces
-- all lowercase with words seperated by _
+- all lowercase with words seperated by -
 
 ### Enable autosave of notebooks to .py
 In `~/.ipython/profile_default/ipython_notebook_config.py` replace:
