@@ -4,8 +4,6 @@ Inspired from http://www.svds.com/jupyter-notebook-best-practices-for-data-scien
 
 ### Folders:
 - ./data
-- ./deliver : final notebook for consumption
-- ./develop : exploratory notebooks stored here
 - ./src     : Scripts/modules stored here
 
 ### Notebooks naming convention:
@@ -17,4 +15,26 @@ e.g.: 2015-12-06-hr-data-cleaning.ipynb
 In `~/.ipython/profile_default/ipython_notebook_config.py` replace:
     
     $ c.FileContentsManager.post_save_hook = None
+
 by 
+
+```
+import os
+from subprocess import check_call
+
+def post_save(model, os_path, contents_manager):
+    """post-save hook for converting notebooks to .py scripts"""
+    if model['type'] != 'notebook':
+        return # only do this for notebooks
+    d, fname = os.path.split(os_path)
+    check_call(['ipython', 'nbconvert', '--to', 'script', fname], cwd=d)
+
+c.FileContentsManager.post_save_hook = post_save
+```
+
+### Workflow
+- Create notebook with above mentioned convention on the exploratory branch
+- Make changes
+- Save changes, .py file is automatically updated
+- If you want to share some code with someone else, make it a function
+- To import the function from someone else import the .py file in your notebook
