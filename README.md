@@ -35,7 +35,11 @@ def post_save(model, os_path, contents_manager):
 
 c.FileContentsManager.post_save_hook = post_save
 ```
-Then restart your ipython notebook
+Then restart your ipython notebook. 
+
+If `~/.ipython/profile_default/ipython_notebook_config.py` doesn't exist run:
+
+        $ ipython profile create
 
 ### Workflow
 - Create notebook with above mentioned convention on the exploratory branch
