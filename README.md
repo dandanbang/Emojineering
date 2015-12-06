@@ -11,6 +11,10 @@ Inspired from http://www.svds.com/jupyter-notebook-best-practices-for-data-scien
 
 e.g.: 2015-12-06-hr-data-cleaning.ipynb
 
+Note:
+- No spaces
+- all lowercase with words seperated by _
+
 ### Enable autosave of notebooks to .py
 In `~/.ipython/profile_default/ipython_notebook_config.py` replace:
     
@@ -31,6 +35,11 @@ def post_save(model, os_path, contents_manager):
 
 c.FileContentsManager.post_save_hook = post_save
 ```
+Then restart your ipython notebook. 
+
+If `~/.ipython/profile_default/ipython_notebook_config.py` doesn't exist run:
+
+        $ ipython profile create
 
 ### Workflow
 - Create notebook with above mentioned convention on the exploratory branch
