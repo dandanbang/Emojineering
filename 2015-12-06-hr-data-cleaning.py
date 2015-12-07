@@ -161,6 +161,37 @@ clean_tweets_df[temp].sample(10)
 
 
 
+# ##Supportive functions
+
+# In[4]:
+
+import re
+try:
+    # Wide UCS-4 build
+    highpoints = re.compile(u'['
+        u'\U0001F300-\U0001F64F'
+        u'\U0001F680-\U0001F6FF'
+        u'\u2600-\u26FF\u2700-\u27BF]+', 
+        re.UNICODE)
+except re.error:
+    # Narrow UCS-2 build
+    highpoints = re.compile(u'('
+        u'\ud83c[\udf00-\udfff]|'
+        u'\ud83d[\udc00-\ude4f\ude80-\udeff]|'
+        u'[\u2600-\u26FF\u2700-\u27BF])+', 
+        re.UNICODE)
+
+
+# In[ ]:
+
+# Functions to check whether there's an emoji in the text, return 1 if true, 0 if false
+def is_emoji(text):
+    if highpoints.search(text):
+        return 1
+    else:
+        return 0
+
+
 # #Functions to extract only emoji or only text from input
 
 # In[1]:
