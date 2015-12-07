@@ -60,6 +60,7 @@ except re.error:
         u'\ud83d[\udc00-\ude4f\ude80-\udeff]|'
         u'[\u2600-\u26FF\u2700-\u27BF])+', 
         re.UNICODE)
+'hu'
 
 
 # # Subset Dataframe with Emojis Only (New Dataframe emoij_df)

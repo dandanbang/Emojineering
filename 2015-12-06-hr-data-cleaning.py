@@ -211,3 +211,8 @@ def textEmojiOnly(df):
     df['Emoji'] = [emojiExtract(word) for word in df.text]
     df['only_Text'] = [textExtract(word) for word in df.text]
 
+
+# In[ ]:
+
+
+
