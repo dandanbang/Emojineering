@@ -1,3 +1,4 @@
 *.ipynb_checkpoints
 *.json
 helpful_notebooks/
+__*__
