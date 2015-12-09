@@ -208,16 +208,10 @@ display(clean_tweets_df.dropna(subset = ["retweet"]))
 
 # ##Supportive functions
 
-<<<<<<< HEAD:2015-12-06-hr-data-cleaning.py
-# In[4]:
-
-import re
-=======
 # #Functions to extract only emoji or only text from input
 
 # In[4]:
 
->>>>>>> master:data_cleaning_hr.py
 try:
     # Wide UCS-4 build
     highpoints = re.compile(u'['
@@ -244,11 +238,8 @@ def is_emoji(text):
         return 0
 
 
-<<<<<<< HEAD:2015-12-06-hr-data-cleaning.py
 # #Functions to extract only emoji or only text from input
 
-=======
->>>>>>> master:data_cleaning_hr.py
 # In[1]:
 
 def emojiExtract(sent):
