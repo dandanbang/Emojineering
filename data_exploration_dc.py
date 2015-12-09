@@ -3,7 +3,7 @@
 
 # #Load Library 
 
-# In[481]:
+# In[482]:
 
 ## import all necessary packages
 import json
@@ -19,7 +19,7 @@ from pandas import *
 
 from collections import defaultdict
 
-import _2015_12_06_hr_data_cleaning as tc
+from data_cleaning_hr import 
 
 from happyfuntokenizing import Tokenizer
 
