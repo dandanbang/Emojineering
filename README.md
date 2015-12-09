@@ -7,9 +7,9 @@ Inspired from http://www.svds.com/jupyter-notebook-best-practices-for-data-scien
 - ./src     : Scripts/modules stored here
 
 ### Notebooks naming convention:
-`\<date in format yyyy-mm-dd\>-\<author initials\>-\<title\>.ipynb`
+`\<title\>_\<author initials\>.ipynb`
 
-e.g.: 2015-12-06-hr-data-cleaning.ipynb
+e.g.: data_cleaning_hr.ipynb
 
 Note:
 - No spaces
