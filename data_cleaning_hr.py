@@ -231,6 +231,8 @@ def is_emoji(text):
         return 0
 
 
+# #Functions to extract only emoji or only text from input
+
 # In[1]:
 
 def emojiExtract(sent):

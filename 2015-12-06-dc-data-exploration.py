@@ -3,7 +3,7 @@
 
 # #Load Library 
 
-# In[2]:
+# In[481]:
 
 ## import all necessary packages
 import json
@@ -19,14 +19,14 @@ from pandas import *
 
 from collections import defaultdict
 
-from happyfuntokenizing import Tokenizer
+import _2015_12_06_hr_data_cleaning as tc
 
-import twitterclean as tc
+from happyfuntokenizing import Tokenizer
 
 
 # #Load Data
 
-# In[3]:
+# In[66]:
 
 with open('./data/tweets_1M.json','r') as f:
     tweet_df = DataFrame(json.load(f))
@@ -34,17 +34,17 @@ with open('./data/tweets_1M.json','r') as f:
 
 # #Clean Data (Handle, URL, Emoticon Conversion)
 
-# In[4]:
+# In[67]:
 
-tweet_df = tc.cleanHandle(tweet_df)
-tweet_df = tc.cleanURL(tweet_df)
-tweet_df = tc.convertEmoticon(tweet_df)
+tc.cleanHandle(tweet_df)
+tc.cleanURL(tweet_df)
+tc.convertEmoticon(tweet_df)
 tweet_df.head()
 
 
 # #Emoji Finder
 
-# In[5]:
+# In[68]:
 
 try:
     # Wide UCS-4 build
@@ -60,12 +60,11 @@ except re.error:
         u'\ud83d[\udc00-\ude4f\ude80-\udeff]|'
         u'[\u2600-\u26FF\u2700-\u27BF])+', 
         re.UNICODE)
-'hu'
 
 
 # # Subset Dataframe with Emojis Only (New Dataframe emoij_df)
 
-# In[6]:
+# In[69]:
 
 emoji_list = []
 for index, value in enumerate(tweet_df.text):
@@ -75,34 +74,9 @@ emoji_index = [x[0] for x in emoji_list]
 emoji_df = tweet_df.ix[emoji_index]
 
 
-# There's a user id so technically we could identify sets of tweets by users. 
-
-# ** first stab at counting frequency of different emojis **
-
-# ##Add a new column that display just the emojis for the text
-
-# In[106]:
-
-def emojiExtract(sent):
-    return [word for word in tok.tokenize(sent) if is_emoji(word) == 1]
-
-def textExtract(sent):
-    return [word for word in tok.tokenize(sent) if is_emoji(word) == 0]
-
-def addEmojiCol(df):
-    df['Emoji'] = [emojiExtract(word) for word in df.text]
-
-def addText(df):
-    df['only_Text'] = [textExtract(word) for word in df.text]
-    
-addEmojiCol(tweet_df)
-addText(tweet_df)
-tweet_df[:10]
-
-
 # # Count Emoji Per Text (1.12 Average Emoji/Text, 53.2 Average Text Length)
 
-# In[7]:
+# In[71]:
 
 # List of functions for emoji search
 faces = re.compile(u'['
@@ -194,7 +168,7 @@ for item in sorted(face_dict.items(), key=lambda x:x[1], reverse=True)[:50]:
 
 # ###Functions to check whether it's emoji or face
 
-# In[30]:
+# In[72]:
 
 # Functions to check whether there's an emoji in the text, return 1 if true, 0 if false
 def is_emoji(text):
@@ -210,7 +184,7 @@ def is_face(text):
         return 0
 
 
-# In[22]:
+# In[73]:
 
 tweet_df["is_emoji"] = tweet_df.text.apply(is_emoji)
 tweet_df["is_face"] = tweet_df.text.apply(is_face)
@@ -224,7 +198,7 @@ tweet_df.describe()
 
 # ##Take a look at the imported tokenizer and test it
 
-# In[23]:
+# In[74]:
 
 tok = Tokenizer(preserve_case=False)
 samples = (
@@ -234,7 +208,7 @@ samples = (
     )
 
 
-# In[24]:
+# In[75]:
 
 for s in samples:
         print("======================================================================")
@@ -324,13 +298,136 @@ collocation_bigrams = collocation_bigrams(text_joined)
 [pair for pair in collocation_bigrams if is_emoji(pair[0]) == 1 and is_emoji(pair[1]) == 1]
 
 
+# #Add a new column that display just the emojis for the text
+
+# In[450]:
+
+def emojiExtract(sent):
+    return [word for word in tok.tokenize(sent) if is_emoji(word) == 1]
+
+def textExtract(sent):
+    return [word for word in tok.tokenize(sent) if is_emoji(word) == 0]
+
+def textTokenized(sent):
+    return [word for word in tok.tokenize(sent)]
+
+def addTokenizedText(df):
+    df['Tokenized'] = [textTokenized(word) for word in df.text]
+
+def addEmojiCol(df):
+    df['Emoji'] = [emojiExtract(word) for word in df.text]
+
+def addText(df):
+    df['only_Text'] = [textExtract(word) for word in df.text]
+
+def addHashTag(df):
+    df['only_HashTag'] = [re.findall(r"(#\w+)", word) for word in df.text]
+
+
 # In[ ]:
 
-'''
-Future Work:
-- look at unigram, bigram, collocations for 1) all text, 2) just text, 3) just emojis, 4) just faces
-- POS tag and pull out nouns, adjectives, and verbs
+addEmojiCol(tweet_df)
+addText(tweet_df)
+tweet_df.head()
 
-'''
 
-1. Clean Non-English Language
+# In[449]:
+
+ex = ['My Friday night... #collegeanatomy #kickingmybutt #study @ The Price Family Inn url']
+[re.findall(r"(#\w+)", word) for word in ex]
+
+
+# ## Create Only Hashtag Column and Tokenized Columns
+
+# In[453]:
+
+#addHashTag(tweet_df)
+#addTokenizedText(tweet_df)
+
+
+# In[156]:
+
+import gensim
+from gensim.models import Word2Vec
+
+
+# In[193]:
+
+#emoji_model = gensim.models.Word2Vec(list(tweet_df.Tokenized))
+# It might take some time to train the model. So, after it is trained, it can be saved as follows:
+#emoji_model.save('emoji.embedding')
+new_model = gensim.models.Word2Vec.load('emoji.embedding')
+
+
+# In[258]:
+
+emoji_model.most_similar(positive = ['😂'], topn = 20)
+
+
+# In[233]:
+
+len(tweet_df[tweet_df.text.str.contains(r'#bye')])
+
+
+# In[253]:
+
+from tsne import bh_sne
+
+
+# #How many Hashtags? 155979
+
+# In[454]:
+
+tweet_df[tweet_df.only_HashTag.str.len() != 0].count(0)
+
+
+# In[333]:
+
+from nltk.corpus import words
+"fuck" in words.words()
+
+
+# In[356]:
+
+def isEnglish(list):
+    try:
+        [word.encode('ascii') for word in list]
+    except Exception:
+        return False
+    else:
+        return True
+print (isEnglish('slabiky, ale liší se podle významu'))
+print (isEnglish('English'))
+print (isEnglish('ގެ ފުރަތަމަ ދެ އަކުރު ކަ'))
+print (isEnglish('how about this one : 通 asfަ'))
+print (isEnglish('?fd4))45s&'))
+print (isEnglish('cherzer now at 96 pitched. Has 10 Ks, allowing only a hit and three base runners thru six. hdl hdl'))
+
+
+# In[460]:
+
+text_list =tweet_df['only_Text'].values
+
+
+# In[461]:
+
+english_Boolean = [isEnglish(word) for word in text_list]
+english_Boolean_Flipped = [not i for i in english_Boolean]
+
+
+# In[462]:
+
+tweet_df_en = tweet_df[english_Boolean]
+tweet_df_non_en = tweet_df[english_Boolean_Flipped]
+
+
+# In[469]:
+
+tweet_df_non_en
+
+
+# In[478]:
+
+ex = ['“',':', '@', ';', '—', '']
+[isEnglish(word) for word in ex]
+
