@@ -201,14 +201,7 @@ display(clean_tweets_df.dropna(subset = ["retweet"]))
 
 # ###Twitter hashtags
 
-# In[ ]:
-
-
-
-
-# ##Supportive functions
-
-# #Functions to extract only emoji or only text from input
+# ###Functions to extract only emoji or only text from input
 
 # In[4]:
 
@@ -247,16 +240,10 @@ def textExtract(sent):
     return [word for word in tok.tokenize(sent) if is_emoji(word) == 0]
 
 
-# ##Functions to Create Two New Columns [Text Only] & [Emoji Only]
-
 # In[2]:
 
 def textEmojiOnly(df):
+    """ Function to Create Two New Columns [Text Only] & [Emoji Only]"""
     df['Emoji'] = [emojiExtract(word) for word in df.text]
     df['only_Text'] = [textExtract(word) for word in df.text]
-
-
-# In[ ]:
-
-
 
