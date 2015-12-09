@@ -24,7 +24,7 @@ from __future__ import print_function
 
 import operator
 import re
-import HTMLParser as hp
+import html.parser as hp
 
 def regex_or(*items):
     return '(?:' + '|'.join(items) + ')'

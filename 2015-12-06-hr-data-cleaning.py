@@ -40,12 +40,9 @@ import nltk
 import re
 
 
-# In[15]:
+# In[ ]:
 
-with open('./data/tweets_training.json','r') as f:
-    tweets_df = pd.DataFrame(json.load(f))
-clean_tweets_df = pd.DataFrame(tweets_df["text"])
-# del tweets_df
+
 
 
 # ### Replace @ handles with hdl
@@ -66,9 +63,6 @@ def cleanHandle(df):
     df.text = df.text.str.replace(pattern, " hdl ")
     return
 
-cleanHandle(clean_tweets_df)
-clean_tweets_df.sample(10)
-
 
 # ### Replace URLs with url
 
@@ -76,7 +70,7 @@ clean_tweets_df.sample(10)
 # 
 # keyword url is used only 4 times in dataset, no risk of confusion
 
-# In[17]:
+# In[1]:
 
 def cleanURL(df):
     """ Replace in-place URLs with url keyword
@@ -88,13 +82,10 @@ def cleanURL(df):
     df.text = df.text.str.replace(pattern, " url ")
     return
 
-cleanURL(clean_tweets_df)
-clean_tweets_df.sample(10)
-
 
 # ### Convert emoticons to emojis
 
-# In[22]:
+# In[2]:
 
 # Based on:
 # https://slack.zendesk.com/hc/en-us/articles/202931348-Emoji-and-emoticons
@@ -140,7 +131,6 @@ def convertEmoticon(df):
     print("{:3} replaced {} times".format("ALL", total))
     return
 
-convertEmoticon(clean_tweets_df)
 
 
 # ### Explore retweets
