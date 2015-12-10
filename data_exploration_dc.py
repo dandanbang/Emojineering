@@ -3,11 +3,12 @@
 
 # #Load Library 
 
-# In[482]:
+# In[1]:
 
 ## import all necessary packages
 import json
 import re
+import pandas as pd
 
 import nltk, string
 from nltk.collocations import *
@@ -19,14 +20,15 @@ from pandas import *
 
 from collections import defaultdict
 
-from data_cleaning_hr import 
+import data_cleaning_hr as tc
 
-from happyfuntokenizing import Tokenizer
+import string
+import happyfuntokenizing
 
 
 # #Load Data
 
-# In[66]:
+# In[20]:
 
 with open('./data/tweets_1M.json','r') as f:
     tweet_df = DataFrame(json.load(f))
@@ -34,17 +36,18 @@ with open('./data/tweets_1M.json','r') as f:
 
 # #Clean Data (Handle, URL, Emoticon Conversion)
 
-# In[67]:
+# In[21]:
 
 tc.cleanHandle(tweet_df)
 tc.cleanURL(tweet_df)
 tc.convertEmoticon(tweet_df)
+tc.cleanRetweets(tweet_df)
 tweet_df.head()
 
 
 # #Emoji Finder
 
-# In[68]:
+# In[22]:
 
 try:
     # Wide UCS-4 build
@@ -76,7 +79,7 @@ emoji_df = tweet_df.ix[emoji_index]
 
 # # Count Emoji Per Text (1.12 Average Emoji/Text, 53.2 Average Text Length)
 
-# In[71]:
+# In[23]:
 
 # List of functions for emoji search
 faces = re.compile(u'['
@@ -168,7 +171,7 @@ for item in sorted(face_dict.items(), key=lambda x:x[1], reverse=True)[:50]:
 
 # ###Functions to check whether it's emoji or face
 
-# In[72]:
+# In[24]:
 
 # Functions to check whether there's an emoji in the text, return 1 if true, 0 if false
 def is_emoji(text):
@@ -198,9 +201,9 @@ tweet_df.describe()
 
 # ##Take a look at the imported tokenizer and test it
 
-# In[74]:
+# In[29]:
 
-tok = Tokenizer(preserve_case=False)
+tok = happyfuntokenizing.TweetTokenizer(preserve_case=False)
 samples = (
     u"RT @ #happyfuncoding: this is a typical Twitter tweet😖",
     u"😂😂😂 RT @Yours_Truly3x: Bitch brush yoo mouth; other Web oddities can be an &aacute;cute <em class='grumpy'>pain</em> >:(",
@@ -208,7 +211,7 @@ samples = (
     )
 
 
-# In[75]:
+# In[31]:
 
 for s in samples:
         print("======================================================================")
@@ -300,7 +303,7 @@ collocation_bigrams = collocation_bigrams(text_joined)
 
 # #Add a new column that display just the emojis for the text
 
-# In[450]:
+# In[32]:
 
 def emojiExtract(sent):
     return [word for word in tok.tokenize(sent) if is_emoji(word) == 1]
@@ -324,10 +327,11 @@ def addHashTag(df):
     df['only_HashTag'] = [re.findall(r"(#\w+)", word) for word in df.text]
 
 
-# In[ ]:
+# In[40]:
 
-addEmojiCol(tweet_df)
-addText(tweet_df)
+#addEmojiCol(tweet_df)
+#addText(tweet_df)
+addTokenizedText(tweet_df)
 tweet_df.head()
 
 
@@ -345,21 +349,21 @@ ex = ['My Friday night... #collegeanatomy #kickingmybutt #study @ The Price Fami
 #addTokenizedText(tweet_df)
 
 
-# In[156]:
+# In[34]:
 
 import gensim
 from gensim.models import Word2Vec
 
 
-# In[193]:
+# In[38]:
 
 #emoji_model = gensim.models.Word2Vec(list(tweet_df.Tokenized))
 # It might take some time to train the model. So, after it is trained, it can be saved as follows:
 #emoji_model.save('emoji.embedding')
-new_model = gensim.models.Word2Vec.load('emoji.embedding')
+emoji_model = gensim.models.Word2Vec.load('emoji.embedding')
 
 
-# In[258]:
+# In[39]:
 
 emoji_model.most_similar(positive = ['😂'], topn = 20)
 
@@ -367,11 +371,6 @@ emoji_model.most_similar(positive = ['😂'], topn = 20)
 # In[233]:
 
 len(tweet_df[tweet_df.text.str.contains(r'#bye')])
-
-
-# In[253]:
-
-from tsne import bh_sne
 
 
 # #How many Hashtags? 155979
@@ -387,47 +386,49 @@ from nltk.corpus import words
 "fuck" in words.words()
 
 
-# In[356]:
+# #Language Cleaning
 
+# In[142]:
+
+punctuation = string.punctuation
+ex = ['“', '—', '’', ' ️', '️', '...', '”', '…', ' , , ,', '?', ' ', ' ⃣', '∞', '🆒']
+for pun in [word for word in ex if word not in punctuation]:
+    punctuation += pun
 def isEnglish(list):
     try:
-        [word.encode('ascii') for word in list]
+        [word.encode('ascii') for word in list if word not in punctuation]
     except Exception:
         return False
     else:
         return True
-print (isEnglish('slabiky, ale liší se podle významu'))
-print (isEnglish('English'))
-print (isEnglish('ގެ ފުރަތަމަ ދެ އަކުރު ކަ'))
-print (isEnglish('how about this one : 通 asfަ'))
-print (isEnglish('?fd4))45s&'))
-print (isEnglish('cherzer now at 96 pitched. Has 10 Ks, allowing only a hit and three base runners thru six. hdl hdl'))
 
 
-# In[460]:
+# In[170]:
 
-text_list =tweet_df['only_Text'].values
-
-
-# In[461]:
-
-english_Boolean = [isEnglish(word) for word in text_list]
-english_Boolean_Flipped = [not i for i in english_Boolean]
+def cleanNonEnglish(df):
+    text_list = df['only_Text'].values
+    english_Boolean = [isEnglish(sent) for sent in text_list]
+    return df[english_Boolean]
 
 
-# In[462]:
+# In[131]:
 
-tweet_df_en = tweet_df[english_Boolean]
-tweet_df_non_en = tweet_df[english_Boolean_Flipped]
-
-
-# In[469]:
-
-tweet_df_non_en
+#with pd.option_context('display.max_rows', 999):
+#    print (tweet_df_non_en['text'])
+#tweet_df_non_en['text'].to_csv('non_en.csv')
 
 
-# In[478]:
+# In[171]:
 
-ex = ['“',':', '@', ';', '—', '']
-[isEnglish(word) for word in ex]
+tweet_df = cleanNonEnglish(tweet_df)
+
+
+# In[172]:
+
+len(tweet_df)
+
+
+# In[ ]:
+
+
 
