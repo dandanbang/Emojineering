@@ -228,7 +228,7 @@ except re.error:
         re.UNICODE)
 
 
-# In[ ]:
+# In[1]:
 
 # Functions to check whether there's an emoji in the text, return 1 if true, 0 if false
 def is_emoji(text):
@@ -237,8 +237,6 @@ def is_emoji(text):
     else:
         return 0
 
-
-# #Functions to extract only emoji or only text from input
 
 # In[1]:
 
@@ -258,7 +256,28 @@ def textEmojiOnly(df):
     df['only_Text'] = [textExtract(word) for word in df.text]
 
 
-# In[ ]:
+# #Functions to clean non-enlgish columns
+
+# In[3]:
+
+import string
+punctuation = string.punctuation
+ex = ['“', '—', '’', ' ️', '️', '...', '”', '…', ' , , ,', '?', ' ', ' ⃣', '∞', '🆒']
+for pun in [word for word in ex if word not in punctuation]:
+    punctuation += pun
+def isEnglish(list):
+    try:
+        [word.encode('ascii') for word in list if word not in punctuation]
+    except Exception:
+        return False
+    else:
+        return True
 
 
+# In[4]:
+
+def cleanNonEnglish(df):
+    text_list = df['only_Text'].values
+    english_Boolean = [isEnglish(sent) for sent in text_list]
+    return df[english_Boolean]
 
