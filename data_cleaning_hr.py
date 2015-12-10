@@ -201,11 +201,12 @@ def splitQuotes(df):
 
 # # Save clean file
 
-# In[27]:
+# In[ ]:
 
-clean_tweets_df = loader('./data/tweets_training.json')
-clean(clean_tweets_df)
-clean_tweets_df.to_json('./data/tweets_training_clean.json', force_ascii=False)
+if __name__ == "__main__":
+    clean_tweets_df = loader('./data/tweets_training.json')
+    clean(clean_tweets_df)
+    clean_tweets_df.to_json('./data/tweets_training_clean.json', force_ascii=False)
 
 
 # # Work in progress
@@ -290,12 +291,13 @@ def cleanNonEnglish(df):
     return df[english_Boolean]
 
 
-# In[7]:
+# In[28]:
 
-test = cleanNonEnglish(clean_tweets_df.iloc[:10000])
+# test = cleanNonEnglish(clean_tweets_df.iloc[:10000])
+# test
 
 
-# In[8]:
+# In[ ]:
 
-test
+
 
