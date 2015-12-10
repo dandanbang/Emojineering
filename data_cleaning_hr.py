@@ -7,25 +7,35 @@
 # - replace @ handles with: hdl (chose a word with no punctuation so no extra step is needed to process, hdl = handle)
 # - replace urls by: url
 # - replace emoticons with corresponding emojis
-# 
+# - split retweets in tweet and retweet
 # 
 # For all of these, first check what is the prevalence and if it is worth the effort. 
 # 
 # Ideas:
-# - split hashtags into words
-#     - Some people seperate words in hashtags with capitals. Make it much easier to seperate. 
-# - replace contractions
-# - spellchecking
-# - what does quoted messages mean? Someone quoting somebody else? Should we consider this text or remove it? 
-# - there are some smileys that are still in punctuation and not in unicode, eg :-P, :-)
-# - Tweets not in english
-# - Character ngram will probably be more efficient due to the really low quality of speach
-# - Retweets have two formats:
-#     - Either finish with RT &lt;content of retweet>
-#     - OR "&lt;content of retweet>" &lt;content of tweet>
-#     - Can also have mutliple embedings with “ for second level. E.g. : 
-# "@letwerkaaaaa: “@Palmira_0: HAHA WHEN I WAS LITTLE I WAS FAT AS FUCK:joy:” Same I was so fat that they thought my vagina was a dick" LMFAO
-#     - For now will leave them here. We might have to consider while training if it is retweeted content or original content. Actually impacts the single response rate, ie when people just add an emoji to a tweet (as in the emoji is the sole content) 
+# - split hashtags into words -> Carlo tackling that
+# - Tweets not in english -> Daniel tackling that
+# - replace contractions & spellchecking
+#     - Character ngram will probably be more efficient due to the really low quality of speach
+
+# In[5]:
+
+# placeholder cannot be called in this file before the all subfunctions are defined
+def clean(df):
+    """Data cleaning steps:
+    - replace @ handles with: hdl (chose a word with no punctuation so no extra step is needed to process, hdl = handle)
+    - replace urls by: url
+    - replace emoticons with corresponding emojis
+    - split retweets in tweet and retweet
+    
+    Returns None (data cleaning in place)
+    """
+    cleanHandle(df)
+    cleanURL(df)
+    convertEmoticon(df)
+    cleanRetweets(df)
+    return
+    
+
 
 # In[88]:
 
@@ -41,13 +51,15 @@ import re
 from IPython.display import display
 
 
-# In[214]:
+# In[1]:
 
 def loader(filename):
+    """ Load tweets from filename. Resets the index. Returns the loaded data frame"""
     with open(filename,'r') as f:
         df = pd.DataFrame(json.load(f))
     df.reset_index(inplace=True, drop=True)
     return df
+
 tweets_df = loader('./data/tweets_training.json')
 clean_tweets_df = tweets_df.ix[:, ["text", "id"]]
 
@@ -150,6 +162,21 @@ convertEmoticon(clean_tweets_df)
 
 # ### Split retweets into user content and retweeted content
 
+# In[4]:
+
+# Cannot be called before functions within are defined 
+def cleanRetweets(df):
+    """ Remove from the text column the retweet column and add to seperate column "retweet". 
+    
+    Returns None
+    """
+    nsplits = 0
+    nsplits += splitRetweets(df)
+    nsplits += splitQuotes(df) # Need to maintain that order
+    print("{} retweets processed".format(nsplits))
+    return
+
+
 # In[326]:
 
 def splitRetweets(df):
@@ -179,29 +206,21 @@ def splitQuotes(df):
     return len(retweets[non_null_idxs])
 
 
-# In[328]:
-
-def cleanRetweets(df):
-    """ Remove from the text column the retweet column and add to seperate column "retweet". 
-    
-    Returns None
-    """
-    nsplits = 0
-    nsplits += splitRetweets(df)
-    nsplits += splitQuotes(df) # Need to maintain that order
-    print("{} retweets processed".format(nsplits))
-    return
-
-
 # In[329]:
 
 cleanRetweets(clean_tweets_df)
 display(clean_tweets_df.dropna(subset = ["retweet"]))
 
 
-# ###Twitter hashtags
-
 # ###Functions to extract only emoji or only text from input
+
+# In[2]:
+
+def textEmojiOnly(df):
+    """ Function to Create Two New Columns [Text Only] & [Emoji Only]"""
+    df['Emoji'] = [emojiExtract(word) for word in df.text]
+    df['only_Text'] = [textExtract(word) for word in df.text]
+
 
 # In[4]:
 
@@ -231,8 +250,6 @@ def is_emoji(text):
         return 0
 
 
-# #Functions to extract only emoji or only text from input
-
 # In[1]:
 
 def emojiExtract(sent):
@@ -242,10 +259,5 @@ def textExtract(sent):
     return [word for word in tok.tokenize(sent) if is_emoji(word) == 0]
 
 
-# In[2]:
-
-def textEmojiOnly(df):
-    """ Function to Create Two New Columns [Text Only] & [Emoji Only]"""
-    df['Emoji'] = [emojiExtract(word) for word in df.text]
-    df['only_Text'] = [textExtract(word) for word in df.text]
-
+# ###Twitter hashtags
+# To be completed by Carlo
