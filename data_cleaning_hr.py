@@ -17,27 +17,7 @@
 # - replace contractions & spellchecking
 #     - Character ngram will probably be more efficient due to the really low quality of speach
 
-# In[5]:
-
-# placeholder cannot be called in this file before the all subfunctions are defined
-def clean(df):
-    """Data cleaning steps:
-    - replace @ handles with: hdl (chose a word with no punctuation so no extra step is needed to process, hdl = handle)
-    - replace urls by: url
-    - replace emoticons with corresponding emojis
-    - split retweets in tweet and retweet
-    
-    Returns None (data cleaning in place)
-    """
-    cleanHandle(df)
-    cleanURL(df)
-    convertEmoticon(df)
-    cleanRetweets(df)
-    return
-    
-
-
-# In[88]:
+# In[18]:
 
 import json
 import numpy as np
@@ -51,7 +31,33 @@ import re
 from IPython.display import display
 
 
-# In[1]:
+# # Key functions
+
+# In[19]:
+
+# placeholder cannot be called in this file before the all subfunctions are defined
+def clean(df):
+    """Data cleaning steps:
+    - replace @ handles with: hdl (chose a word with no punctuation so no extra step is needed to process, hdl = handle)
+    - replace urls by: url
+    - replace emoticons with corresponding emojis
+    - split retweets in tweet and retweet
+    
+    To be added:
+    - remove non english tweets, done on the text only (not retweet). Needs to be applied after emoji split. 
+    - hashtags splits
+    
+    Returns None (data cleaning in place)
+    """
+    cleanHandle(df)
+    cleanURL(df)
+    convertEmoticon(df)
+    cleanRetweets(df)
+    return
+    
+
+
+# In[20]:
 
 def loader(filename):
     """ Load tweets from filename. Resets the index. Returns the loaded data frame"""
@@ -60,17 +66,12 @@ def loader(filename):
     df.reset_index(inplace=True, drop=True)
     return df
 
-tweets_df = loader('./data/tweets_training.json')
-clean_tweets_df = tweets_df.ix[:, ["text", "id"]]
 
+# # Support functions
 
 # ### Replace @ handles with hdl
 
-# No "hdl" words for confusion in the txt. Good replacement name. 
-# 
-# Best to replace handles with "\ hdl\ ", so for tokenization it will be easier to identify as a word. 
-
-# In[215]:
+# In[21]:
 
 def cleanHandle(df):
     """ Replace in-place handles with hdl keyword
@@ -82,36 +83,33 @@ def cleanHandle(df):
     df.text = df.text.str.replace(pattern, " hdl ")
     return
 
-cleanHandle(clean_tweets_df)
-# clean_tweets_df.sample(10)
 
+# No "hdl" words for confusion in the txt. Good replacement name. 
+# 
+# Best to replace handles with "\ hdl\ ", so for tokenization it will be easier to identify as a word. 
 
 # ### Replace URLs with url
 
-# URLs are quiet well formed and are generally at the end of tweets. No risk of engulfing in the cleaning some more text after the url.
-# 
-# keyword url is used only 4 times in dataset, no risk of confusion
-
-# In[216]:
+# In[22]:
 
 def cleanURL(df):
     """ Replace in-place URLs with url keyword
     
     Returns None
     """
-#     pattern = r"http://\S+"
     pattern = r'(?:http://|https://|www.)[^“”"\' ]+' # From http://stackoverflow.com/questions/7679970/python-regular-expression-nltk-website-extraction
     print("{} urls replaced".format(np.sum(clean_tweets_df.text.str.contains(pattern).values)))
     df.text = df.text.str.replace(pattern, " url ")
     return
 
-cleanURL(clean_tweets_df)
-# clean_tweets_df.sample(100)
 
+# URLs are quiet well formed and are generally at the end of tweets. No risk of engulfing in the cleaning some more text after the url.
+# 
+# keyword url is used only 4 times in dataset, no risk of confusion
 
 # ### Convert emoticons to emojis
 
-# In[92]:
+# In[23]:
 
 # Based on:
 # https://slack.zendesk.com/hc/en-us/articles/202931348-Emoji-and-emoticons
@@ -145,9 +143,6 @@ def convertEmoticon(df):
         r";-*[PpbB]": "\U0001F61C"
     }
     
-#     for emoticon in emoticon2emoji:
-#         print("{:10} -> {:>5}".format(emoticon, emoticon2emoji[emoticon]))
-    
     total = 0
     for emoticon in emoticon2emoji:
         nreplacements = np.sum(df.text.str.contains(emoticon).values)
@@ -157,12 +152,10 @@ def convertEmoticon(df):
     print("{:3} replaced {} times".format("ALL", total))
     return
 
-convertEmoticon(clean_tweets_df)
-
 
 # ### Split retweets into user content and retweeted content
 
-# In[4]:
+# In[24]:
 
 # Cannot be called before functions within are defined 
 def cleanRetweets(df):
@@ -177,7 +170,7 @@ def cleanRetweets(df):
     return
 
 
-# In[326]:
+# In[25]:
 
 def splitRetweets(df):
     """ Extract retweets with the RT keyword"""
@@ -190,7 +183,7 @@ def splitRetweets(df):
     return len(non_null_idxs)
 
 
-# In[335]:
+# In[26]:
 
 def splitQuotes(df):
     """ Extract retweets in quote format.
@@ -206,11 +199,16 @@ def splitQuotes(df):
     return len(retweets[non_null_idxs])
 
 
-# In[329]:
+# # Save clean file
 
-cleanRetweets(clean_tweets_df)
-display(clean_tweets_df.dropna(subset = ["retweet"]))
+# In[27]:
 
+clean_tweets_df = loader('./data/tweets_training.json')
+clean(clean_tweets_df)
+clean_tweets_df.to_json('./data/tweets_training_clean.json', force_ascii=False)
+
+
+# # Work in progress
 
 # ###Functions to extract only emoji or only text from input
 
@@ -240,7 +238,7 @@ except re.error:
         re.UNICODE)
 
 
-# In[ ]:
+# In[1]:
 
 # Functions to check whether there's an emoji in the text, return 1 if true, 0 if false
 def is_emoji(text):
@@ -261,3 +259,43 @@ def textExtract(sent):
 
 # ###Twitter hashtags
 # To be completed by Carlo
+
+# ## Functions to clean non-english columns
+
+# In[3]:
+
+import string
+punctuation = string.punctuation
+ex = ['“', '—', '’', ' ️', '️', '...', '”', '…', ' , , ,', '?', ' ', ' ⃣', '∞', '🆒']
+for pun in [word for word in ex if word not in punctuation]:
+    punctuation += pun
+def isEnglish(list):
+    try:
+        [word.encode('ascii') for word in list if word not in punctuation]
+    except Exception:
+        return False
+    else:
+        return True
+
+
+# In[6]:
+
+def cleanNonEnglish(df):
+    """ 
+    
+    Needs to be applied after emoji splitting as emojis are considered non-english
+    """
+    text_list = df['text'].values
+    english_Boolean = [isEnglish(sent) for sent in text_list]
+    return df[english_Boolean]
+
+
+# In[7]:
+
+test = cleanNonEnglish(clean_tweets_df.iloc[:10000])
+
+
+# In[8]:
+
+test
+
