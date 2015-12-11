@@ -17,7 +17,7 @@
 # - replace contractions & spellchecking
 #     - Character ngram will probably be more efficient due to the really low quality of speach
 
-# In[18]:
+# In[1]:
 
 import json
 import numpy as np
@@ -33,7 +33,7 @@ from IPython.display import display
 
 # # Key functions
 
-# In[19]:
+# In[2]:
 
 # placeholder cannot be called in this file before the all subfunctions are defined
 def clean(df):
@@ -57,7 +57,7 @@ def clean(df):
     
 
 
-# In[20]:
+# In[3]:
 
 def loader(filename):
     """ Load tweets from filename. Resets the index. Returns the loaded data frame"""
@@ -71,7 +71,7 @@ def loader(filename):
 
 # ### Replace @ handles with hdl
 
-# In[21]:
+# In[4]:
 
 def cleanHandle(df):
     """ Replace in-place handles with hdl keyword
@@ -90,7 +90,7 @@ def cleanHandle(df):
 
 # ### Replace URLs with url
 
-# In[22]:
+# In[5]:
 
 def cleanURL(df):
     """ Replace in-place URLs with url keyword
@@ -109,7 +109,7 @@ def cleanURL(df):
 
 # ### Convert emoticons to emojis
 
-# In[23]:
+# In[6]:
 
 # Based on:
 # https://slack.zendesk.com/hc/en-us/articles/202931348-Emoji-and-emoticons
@@ -155,7 +155,7 @@ def convertEmoticon(df):
 
 # ### Split retweets into user content and retweeted content
 
-# In[24]:
+# In[7]:
 
 # Cannot be called before functions within are defined 
 def cleanRetweets(df):
@@ -170,7 +170,7 @@ def cleanRetweets(df):
     return
 
 
-# In[25]:
+# In[8]:
 
 def splitRetweets(df):
     """ Extract retweets with the RT keyword"""
@@ -183,7 +183,7 @@ def splitRetweets(df):
     return len(non_null_idxs)
 
 
-# In[26]:
+# In[9]:
 
 def splitQuotes(df):
     """ Extract retweets in quote format.
@@ -201,7 +201,7 @@ def splitQuotes(df):
 
 # # Save clean file
 
-# In[ ]:
+# In[11]:
 
 if __name__ == "__main__":
     clean_tweets_df = loader('./data/tweets_training.json')
@@ -213,7 +213,7 @@ if __name__ == "__main__":
 
 # ###Functions to extract only emoji or only text from input
 
-# In[2]:
+# In[11]:
 
 def textEmojiOnly(df):
     """ Function to Create Two New Columns [Text Only] & [Emoji Only]"""
@@ -221,7 +221,7 @@ def textEmojiOnly(df):
     df['only_Text'] = [textExtract(word) for word in df.text]
 
 
-# In[4]:
+# In[12]:
 
 try:
     # Wide UCS-4 build
@@ -239,7 +239,7 @@ except re.error:
         re.UNICODE)
 
 
-# In[1]:
+# In[13]:
 
 # Functions to check whether there's an emoji in the text, return 1 if true, 0 if false
 def is_emoji(text):
@@ -249,7 +249,7 @@ def is_emoji(text):
         return 0
 
 
-# In[1]:
+# In[14]:
 
 def emojiExtract(sent):
     return [word for word in tok.tokenize(sent) if is_emoji(word) == 1]
@@ -263,7 +263,7 @@ def textExtract(sent):
 
 # ## Functions to clean non-english columns
 
-# In[3]:
+# In[15]:
 
 import string
 punctuation = string.punctuation
@@ -279,7 +279,7 @@ def isEnglish(list):
         return True
 
 
-# In[6]:
+# In[16]:
 
 def cleanNonEnglish(df):
     """ 
@@ -291,10 +291,52 @@ def cleanNonEnglish(df):
     return df[english_Boolean]
 
 
-# In[28]:
+# In[17]:
 
 # test = cleanNonEnglish(clean_tweets_df.iloc[:10000])
 # test
+
+
+# ## Split Hashtag
+
+# In[1]:
+
+def apply_hashtag_split(_hashtag):
+    # for each hashtag in list of hashtags, split on # and take second item
+    item = [item.split('#')[1] for item in _hashtag if len(item) > 0]
+    
+    # regex pattern
+    pattern = r'''([A-Z]{2,})      | (1) split on two caps or more, and only keep caps
+                  ([A-Z]{1}[a-z]*)   (2) split on exactly one cap or more, and keep 
+                                         trailing letters '''
+    
+    # loop through each item in list of hashtags
+    final_hashtags = []
+    for word in item:
+        
+        # if len of word is 0, then there is no hashtag
+        if len(word) == 0:
+            print("empty_hashtag")
+            final_hashtags.append("empty_hashtag")
+        
+        # use (1)) regex: funciton lowercase, as "Treatlowercase" can be treated as lowercase
+        elif word[0].isupper() and word[1:].islower():
+            print("lower_forced: " + word + " : ", end="")
+            print(infer_spaces(word.lower()))
+            final_hashtags.append(infer_spaces(word.lower()))
+        
+        # use (1) regex: funciton lowercase
+        elif word.islower():
+            print("lower       :: " + word + " : ", end="")
+            print(infer_spaces(word))
+            final_hashtags.append(infer_spaces(word))
+        
+        # use (2) regex: customized uppercase
+        else:
+            print("upper       : " + word + " : ", end="")
+            print(list(filter(None, re.split(pattern, word))))
+            final_hashtags.append(list(filter(None, re.split(pattern, word))))
+    return final_hashtags
 
 
 # In[ ]:
