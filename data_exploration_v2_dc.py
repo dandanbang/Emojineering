@@ -3,7 +3,7 @@
 
 # #Load Library 
 
-# In[3]:
+# In[1]:
 
 ## import all necessary packages
 import json
@@ -28,26 +28,23 @@ import happyfuntokenizing
 
 # #Load Data
 
-# In[ ]:
+# In[74]:
 
-with open('./data/tweets_training.json','r') as f:
+with open('./data/tweets_training_clean.json','r') as f:
     tweet_df = DataFrame(json.load(f))
 
 
 # #Clean Data (Handle, URL, Emoticon Conversion)
 
-# In[21]:
+# In[3]:
 
-tc.cleanHandle(tweet_df)
-tc.cleanURL(tweet_df)
-tc.convertEmoticon(tweet_df)
-tc.cleanRetweets(tweet_df)
+tc.clean(tweet_df)
 tweet_df.head()
 
 
 # #Emoji Finder
 
-# In[22]:
+# In[4]:
 
 try:
     # Wide UCS-4 build
@@ -65,7 +62,7 @@ except re.error:
         re.UNICODE)
 
 
-# In[1]:
+# In[5]:
 
 faces = re.compile(u'['
         u'\U0001F600-\U0001F64F]',
@@ -121,7 +118,7 @@ tweet_df.describe()
 
 # ##Take a look at the imported tokenizer and test it
 
-# In[29]:
+# In[6]:
 
 tok = happyfuntokenizing.TweetTokenizer(preserve_case=False)
 samples = (
@@ -143,18 +140,29 @@ for s in samples:
 
 # #Add a new column that display just the emojis for the text
 
-# In[32]:
+# In[20]:
+
+ex = 'hdl not funny! Sad 😞😭 bye money 💸. Now you have to drive me places Donna'
+def textExtract(sent):
+    return ''.join([word for word in sent if is_emoji(word) == 0])
+
+def emojiExtract(sent):
+    return [word for word in tok.tokenize(sent) if is_emoji(word) == 1]
+
+textExtract(ex)
+
+
+# In[7]:
 
 def emojiExtract(sent):
     return [word for word in tok.tokenize(sent) if is_emoji(word) == 1]
 
 def textExtract(sent):
-    return [word for word in tok.tokenize(sent) if is_emoji(word) == 0]
-
-def textTokenized(sent):
-    return [word for word in tok.tokenize(sent)]
+    return ''.join([word for word in sent if is_emoji(word) == 0])
 
 def addTokenizedText(df):
+    def textTokenized(sent):
+        return [word for word in tok.tokenize(sent)]
     df['Tokenized'] = [textTokenized(word) for word in df.text]
 
 def addEmojiCol(df):
@@ -165,6 +173,36 @@ def addText(df):
 
 def addHashTag(df):
     df['only_HashTag'] = [re.findall(r"(#\w+)", word) for word in df.text]
+
+
+# In[71]:
+
+def splitTextEmoji(df):
+    def emojiExtract(sent):
+        return [word for word in tok.tokenize(sent) if is_emoji(word) == 1]
+
+    def textExtract(sent):
+        return ''.join([word for word in sent if is_emoji(word) == 0])
+
+    def addEmoji(df):
+        df['only_Emoji'] = [emojiExtract(word) for word in df.text]
+
+    def addText(df):
+        df['only_Text'] = [textExtract(word) for word in df.text]
+    
+    addText(df)
+    addEmoji(df)
+    return
+
+
+# In[75]:
+
+splitTextEmoji(tweet_df)
+
+
+# In[76]:
+
+tweet_df.head()
 
 
 # In[40]:
@@ -212,7 +250,7 @@ tweet_df[tweet_df.only_HashTag.str.len() != 0].count(0)
 
 # #Language Cleaning
 
-# In[142]:
+# In[29]:
 
 punctuation = string.punctuation
 ex = ['“', '—', '’', ' ️', '️', '...', '”', '…', ' , , ,', '?', ' ', ' ⃣', '∞', '🆒']
@@ -227,16 +265,118 @@ def isEnglish(list):
         return True
 
 
-# In[170]:
+# In[83]:
 
 def cleanNonEnglish(df):
-    text_list = df['only_Text'].values
+    temp = df.copy()
+    text_list = df['only_text'].values
     english_Boolean = [isEnglish(sent) for sent in text_list]
-    return df[english_Boolean]
+    df = temp[english_Boolean]
+    return temp[english_Boolean]
 
 
-# In[171]:
+# In[84]:
 
-tweet_df = cleanNonEnglish(tweet_df)
+tweet_df_clean = cleanNonEnglish(tweet_df.iloc[0:10000])
+len(tweet_df_clean)
+
+
+# In[82]:
+
+cleanNonEnglish(tweet_df.iloc[0:10000])
 len(tweet_df)
+
+
+# In[46]:
+
+get_ipython().magic('pinfo2 pandas.DataFrame.drop')
+
+
+# In[93]:
+
+def apply_hashtag_split(_hashtag):
+    # for each hashtag in list of hashtags, split on # and take second item
+    item = [item.split('#')[1] for item in _hashtag if len(item) > 0]
+    
+    # regex pattern
+    pattern = r'''([A-Z]{2,})      | (1) split on two caps or more, and only keep caps
+                  ([A-Z]{1}[a-z]*)   (2) split on exactly one cap or more, and keep 
+                                         trailing letters '''
+    
+    # loop through each item in list of hashtags
+    final_hashtags = []
+    for word in item:
+        
+        # if len of word is 0, then there is no hashtag
+        if len(word) == 0:
+            print("empty_hashtag")
+            final_hashtags.append("empty_hashtag")
+        
+        # use (1)) regex: funciton lowercase, as "Treatlowercase" can be treated as lowercase
+        elif word[0].isupper() and word[1:].islower():
+            print("lower_forced: " + word + " : ", end="")
+            print(infer_spaces(word.lower()))
+            final_hashtags.append(infer_spaces(word.lower()))
+        
+        # use (1) regex: funciton lowercase
+        elif word.islower():
+            print("lower       :: " + word + " : ", end="")
+            print(infer_spaces(word))
+            final_hashtags.append(infer_spaces(word))
+        
+        # use (2) regex: customized uppercase
+        else:
+            print("upper       : " + word + " : ", end="")
+            print(list(filter(None, re.split(pattern, word))))
+            final_hashtags.append(list(filter(None, re.split(pattern, word))))
+    return final_hashtags
+
+
+# In[87]:
+
+addHashTag(tweet_df)
+tweet_df
+
+
+# In[90]:
+
+tweet_df['only_HashTag'].apply(apply_hashtag_split())
+
+
+# In[95]:
+
+def infer_spaces(s):
+    """Uses dynamic programming to infer the location of spaces in a string
+    without spaces."""
+    
+    # Build a cost dictionary, assuming Zipf's law and cost = -math.log(probability).
+
+    # Find the best match for the i first characters, assuming cost has
+    # been built for the i-1 first characters.
+    # Returns a pair (match_cost, match_length).
+    def best_match(i):
+        candidates = enumerate(reversed(cost[max(0, i-maxword):i]))
+        return min((c + wordcost.get(s[i-k-1:i], 9e999), k+1) for k,c in candidates)
+
+    # Build the cost array.
+    cost = [0]
+    for i in range(1,len(s)+1):
+        c,k = best_match(i)
+        cost.append(c)
+
+    # Backtrack to recover the minimal-cost string.
+    out = []
+    i = len(s)
+    while i>0:
+        c,k = best_match(i)
+        assert c == cost[i]
+        out.append(s[i-k:i])
+        i -= k
+
+    return list(reversed(out))
+
+
+# In[96]:
+
+apply_hashtag_split(['#whitegirlprobs'])
 

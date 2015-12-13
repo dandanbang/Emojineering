@@ -17,7 +17,7 @@
 # - replace contractions & spellchecking
 #     - Character ngram will probably be more efficient due to the really low quality of speach
 
-# In[1]:
+# In[26]:
 
 import json
 import numpy as np
@@ -29,11 +29,12 @@ pd.options.display.max_colwidth = 140
 import nltk
 import re
 from IPython.display import display
+import happyfuntokenizing
 
 
 # # Key functions
 
-# In[2]:
+# In[12]:
 
 # placeholder cannot be called in this file before the all subfunctions are defined
 def clean(df):
@@ -53,11 +54,13 @@ def clean(df):
     cleanURL(df)
     convertEmoticon(df)
     cleanRetweets(df)
-    return
+    splitTextEmoji(df)
+    df = cleanNonEnglish(df)
+    return df
     
 
 
-# In[3]:
+# In[13]:
 
 def loader(filename):
     """ Load tweets from filename. Resets the index. Returns the loaded data frame"""
@@ -71,7 +74,7 @@ def loader(filename):
 
 # ### Replace @ handles with hdl
 
-# In[4]:
+# In[14]:
 
 def cleanHandle(df):
     """ Replace in-place handles with hdl keyword
@@ -90,7 +93,7 @@ def cleanHandle(df):
 
 # ### Replace URLs with url
 
-# In[5]:
+# In[15]:
 
 def cleanURL(df):
     """ Replace in-place URLs with url keyword
@@ -98,7 +101,7 @@ def cleanURL(df):
     Returns None
     """
     pattern = r'(?:http://|https://|www.)[^“”"\' ]+' # From http://stackoverflow.com/questions/7679970/python-regular-expression-nltk-website-extraction
-    print("{} urls replaced".format(np.sum(clean_tweets_df.text.str.contains(pattern).values)))
+    print("{} urls replaced".format(np.sum(df.text.str.contains(pattern).values)))
     df.text = df.text.str.replace(pattern, " url ")
     return
 
@@ -109,7 +112,7 @@ def cleanURL(df):
 
 # ### Convert emoticons to emojis
 
-# In[6]:
+# In[16]:
 
 # Based on:
 # https://slack.zendesk.com/hc/en-us/articles/202931348-Emoji-and-emoticons
@@ -155,7 +158,7 @@ def convertEmoticon(df):
 
 # ### Split retweets into user content and retweeted content
 
-# In[7]:
+# In[17]:
 
 # Cannot be called before functions within are defined 
 def cleanRetweets(df):
@@ -170,7 +173,7 @@ def cleanRetweets(df):
     return
 
 
-# In[8]:
+# In[18]:
 
 def splitRetweets(df):
     """ Extract retweets with the RT keyword"""
@@ -183,7 +186,7 @@ def splitRetweets(df):
     return len(non_null_idxs)
 
 
-# In[9]:
+# In[19]:
 
 def splitQuotes(df):
     """ Extract retweets in quote format.
@@ -199,29 +202,9 @@ def splitQuotes(df):
     return len(retweets[non_null_idxs])
 
 
-# # Save clean file
+# ### Split Text and Emoji and create two new columns for only text and only emoji
 
-# In[11]:
-
-if __name__ == "__main__":
-    clean_tweets_df = loader('./data/tweets_training.json')
-    clean(clean_tweets_df)
-    clean_tweets_df.to_json('./data/tweets_training_clean.json', force_ascii=False)
-
-
-# # Work in progress
-
-# ###Functions to extract only emoji or only text from input
-
-# In[11]:
-
-def textEmojiOnly(df):
-    """ Function to Create Two New Columns [Text Only] & [Emoji Only]"""
-    df['Emoji'] = [emojiExtract(word) for word in df.text]
-    df['only_Text'] = [textExtract(word) for word in df.text]
-
-
-# In[12]:
+# In[24]:
 
 try:
     # Wide UCS-4 build
@@ -237,33 +220,34 @@ except re.error:
         u'\ud83d[\udc00-\ude4f\ude80-\udeff]|'
         u'[\u2600-\u26FF\u2700-\u27BF])+', 
         re.UNICODE)
-
-
-# In[13]:
-
 # Functions to check whether there's an emoji in the text, return 1 if true, 0 if false
 def is_emoji(text):
     if highpoints.search(text):
         return 1
     else:
         return 0
+def splitTextEmoji(df):
+    tok = happyfuntokenizing.TweetTokenizer(preserve_case=False)
+    def emojiExtract(sent):
+        return [word for word in tok.tokenize(sent) if is_emoji(word) == 1]
 
+    def textExtract(sent):
+        return ''.join([word for word in sent if is_emoji(word) == 0])
 
-# In[14]:
+    def addEmoji(df):
+        df['only_emoji'] = [emojiExtract(word) for word in df.text]
 
-def emojiExtract(sent):
-    return [word for word in tok.tokenize(sent) if is_emoji(word) == 1]
+    def addText(df):
+        df['only_text'] = [textExtract(word) for word in df.text]
+    
+    addText(df)
+    addEmoji(df)
+    return
 
-def textExtract(sent):
-    return [word for word in tok.tokenize(sent) if is_emoji(word) == 0]
-
-
-# ###Twitter hashtags
-# To be completed by Carlo
 
 # ## Functions to clean non-english columns
 
-# In[15]:
+# In[21]:
 
 import string
 punctuation = string.punctuation
@@ -277,25 +261,28 @@ def isEnglish(list):
         return False
     else:
         return True
-
-
-# In[16]:
-
 def cleanNonEnglish(df):
     """ 
     
     Needs to be applied after emoji splitting as emojis are considered non-english
     """
-    text_list = df['text'].values
+    text_list = df['only_text'].values
     english_Boolean = [isEnglish(sent) for sent in text_list]
+    print("{} number of tweets are not English".format(len(english_Boolean) - sum(english_Boolean)))
     return df[english_Boolean]
 
 
-# In[17]:
+# # Save clean file
 
-# test = cleanNonEnglish(clean_tweets_df.iloc[:10000])
-# test
+# In[30]:
 
+if __name__ == "__main__":
+    clean_tweets_df = loader('./data/tweets_training.json')
+    clean_tweets_df = clean(clean_tweets_df)
+    clean_tweets_df.to_json('./data/tweets_training_clean.json', force_ascii=False)
+
+
+# # Work in progress
 
 # ## Split Hashtag
 
@@ -337,9 +324,4 @@ def apply_hashtag_split(_hashtag):
             print(list(filter(None, re.split(pattern, word))))
             final_hashtags.append(list(filter(None, re.split(pattern, word))))
     return final_hashtags
-
-
-# In[ ]:
-
-
 
