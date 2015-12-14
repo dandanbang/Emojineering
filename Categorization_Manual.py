@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[4]:
+# In[3]:
 
 ## import all necessary packages
 import json
@@ -23,25 +23,25 @@ import happyfuntokenizing
 import json
 
 
-# In[5]:
+# In[4]:
 
 with open("./data/categories_manual.json") as json_file:
     category_dict = json.load(json_file)
 
 
-# In[ ]:
+# In[5]:
 
 with open('./data/emoji_webscraped_expanded.json','r') as f_emoji:
     emoji_df = DataFrame(json.load(f_emoji))
 
 
-# In[ ]:
+# In[6]:
 
 with open('./data/tweets_test_clean.json','r') as f:
     tweet_df = DataFrame(json.load(f))
 
 
-# In[ ]:
+# In[7]:
 
 tweet_df.head()
 
@@ -50,7 +50,7 @@ tweet_df.head()
 
 # **emoji_array**:  list of all emojis
 
-# In[ ]:
+# In[8]:
 
 emoji_array = [word for item in tweet_df.only_emoji for word in item]
 len(emoji_array)
@@ -58,7 +58,7 @@ len(emoji_array)
 
 # **unique_emoji**:  number of unique emojis
 
-# In[ ]:
+# In[9]:
 
 unique_emoji = set(emoji_array)
 len(unique_emoji)
@@ -66,14 +66,14 @@ len(unique_emoji)
 
 # **full_dict**: percentage of emojis by emoji
 
-# In[ ]:
+# In[10]:
 
 full_dict = defaultdict(int)
 for item in emoji_array:
     full_dict[item] += 1
 
 
-# In[ ]:
+# In[11]:
 
 for item in sorted(full_dict.items(), key=lambda x:x[1], reverse=True)[:50]:
     print(item[0], (float(item[1])/len(emoji_array))*100)
@@ -83,7 +83,7 @@ for item in sorted(full_dict.items(), key=lambda x:x[1], reverse=True)[:50]:
 
 # **unique_face**: unique faces from category_dict file
 
-# In[ ]:
+# In[12]:
 
 unique_face = [face for item in category_dict.values() for face in item]
 len(unique_face)
@@ -91,13 +91,13 @@ len(unique_face)
 
 # **all_faces**: from emoji_array (list of all emojis), subset by unique_face
 
-# In[ ]:
+# In[13]:
 
 all_faces = [unique for face in emoji_array for unique in unique_face if face in unique]
 len(all_faces)
 
 
-# In[ ]:
+# In[14]:
 
 all_faces_unique = set(all_faces)
 len(all_faces_unique)
@@ -105,7 +105,7 @@ len(all_faces_unique)
 
 # **categorize**: list of all_faces defined by their respective category from cateogry_dict
 
-# In[ ]:
+# In[15]:
 
 cateogrize = []
 for category, faces in category_dict.items():
@@ -114,21 +114,21 @@ for category, faces in category_dict.items():
                 cateogrize.append((category, every_face))
 
 
-# In[ ]:
+# In[16]:
 
 # cateogrize
 
 
 # **categorize_percentage**: dictionary with count of each categroy form categorize
 
-# In[ ]:
+# In[17]:
 
 category_percentage = defaultdict(int)
 for item in cateogrize:
     category_percentage[item[0]] += 1
 
 
-# In[ ]:
+# In[18]:
 
 for item in sorted(category_percentage.items(), key=lambda x:x[1], reverse=True)[:50]:
     print(item[0], (float(item[1])/len(cateogrize))*100)
@@ -136,7 +136,7 @@ for item in sorted(category_percentage.items(), key=lambda x:x[1], reverse=True)
 
 # ## Add category column to dataframe
 
-# In[ ]:
+# In[19]:
 
 def cateogry_column(text):
     if len(text) == 0:
@@ -183,7 +183,7 @@ def cateogry_column(text):
     return
 
 
-# In[ ]:
+# In[20]:
 
 print(cateogry_column([]))
 print(cateogry_column(["❤"]))
@@ -193,71 +193,76 @@ print(cateogry_column(["😒", "👌"]))
 print(cateogry_column(["😒","❤","😩", "👌"]))
 
 
-# In[ ]:
+# In[21]:
 
 tweet_df["cateogry_prediction"] = tweet_df.only_emoji.apply(cateogry_column)
 
 
-# In[ ]:
+# In[22]:
 
 dict_category_prediction = defaultdict(int)
 for item in tweet_df.cateogry_prediction:
     dict_category_prediction[item] += 1
 
 
-# In[ ]:
+# In[23]:
 
 dict_category_prediction
 
 
-# In[ ]:
+# In[24]:
 
 (11559 + 52558 + 38702 + 2345) / (len(tweet_df) - 625122)
 
 
-# In[ ]:
+# In[25]:
 
 (11559 + 52558 + 38702 + 2345)
 
 
 # ## Make Final column numeric
 
-# In[ ]:
+# In[26]:
 
 tweet_df.head()
 
 
-# In[ ]:
+# In[27]:
 
 numeric_category = [(index, value) for index, value in enumerate(list(set(tweet_df.cateogry_prediction)))]
 numeric_category
 
 
-# In[ ]:
+# In[28]:
 
 def make_numeric(text):
     _num = [item[0] for item in numeric_category if text == item[1]]
     return _num[0]
 
 
-# In[ ]:
+# In[29]:
 
 make_numeric(None)
 
 
-# In[ ]:
+# In[30]:
 
 tweet_df['category_numeric'] = tweet_df.cateogry_prediction.apply(make_numeric)
 
 
-# In[ ]:
+# In[31]:
 
 tweet_df.shape
 
 
-# In[ ]:
+# In[32]:
 
 tweet_df.to_json('./data/tweets_test_clean_preprocessing.json', force_ascii=False)
+
+
+# In[33]:
+
+tweet_df
 
 
 # In[ ]:
