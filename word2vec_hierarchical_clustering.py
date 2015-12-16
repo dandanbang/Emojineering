@@ -3,7 +3,7 @@
 
 # The goal is to try to do hierarchical clustering of emojis, based on word2vec, ie cosine similarity between word contexts. 
 
-# In[24]:
+# In[44]:
 
 import re
 import math
@@ -27,13 +27,13 @@ from IPython.display import display
 
 # ## Load files
 
-# In[25]:
+# In[45]:
 
 tweet_df = loader("./data/tweets_training_clean.json")
 emojis_df = loader("./data/emoji_webscraped_expanded.json")
 
 
-# In[26]:
+# In[46]:
 
 def convertEmojis(df):
     """Converts emojis df to printable format """
@@ -41,22 +41,21 @@ def convertEmojis(df):
     return emojis
 
 
-# In[27]:
+# In[47]:
 
 emojis_df["emojis"] = convertEmojis(emojis_df)
 
 
 # ## Training word2vec model
 
-# ### Tokenising
+# In[53]:
 
-# In[28]:
-
+# Tokenising
 tok = src.happyfuntokenizing.Tokenizer(preserve_case=False)
 tweet_df["tokens"] = [list(tok.tokenize(tweet)) for tweet in tweet_df.text]
 
 
-# In[29]:
+# In[54]:
 
 # Run once to create and save the word2vec model
 # emoji_model = gensim.models.Word2Vec(list(tweet_df.tokens), window=10, size=200, workers=4, min_count=100) 
@@ -64,7 +63,7 @@ tweet_df["tokens"] = [list(tok.tokenize(tweet)) for tweet in tweet_df.text]
 emoji_model = gensim.models.Word2Vec.load('emoji.embedding')
 
 
-# In[30]:
+# In[56]:
 
 emoji_model.most_similar(positive = ['🍻'], negative= [])
 
