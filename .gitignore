@@ -1,7 +1,5 @@
 *.ipynb_checkpoints
 helpful_notebooks/
 __*__
-./data/tweets_1M.json
-./data/tweets_training.json
-./data/tweets_training_clean.json
 __MACOSX
+.json
